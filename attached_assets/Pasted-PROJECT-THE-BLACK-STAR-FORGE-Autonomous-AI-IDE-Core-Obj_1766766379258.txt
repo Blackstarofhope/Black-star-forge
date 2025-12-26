@@ -1,0 +1,55 @@
+PROJECT: THE BLACK STAR FORGE (Autonomous AI-IDE)
+Core Objective:
+Build a superior, browser-based AI Development Environment (IDE) called "The Black Star Forge." The app must use WebContainers to run Node.js entirely in the browser (client-side), ensuring zero vendor lock-in.
+Tech Stack:
+• Frontend: React, Vite, Tailwind CSS.
+• Core Engine: WebContainer API (by StackBlitz).
+• Editor: Monaco Editor (VS Code implementation).
+• State/Sync: Yjs (for multiplayer) + Firebase Client SDK.
+I. THE INTERFACE (Cyberpunk Aesthetic)
+1. Layout:
+• Left Sidebar: File Explorer + "God View" Tab + "Knowledge Base" Tab.
+• Center: Monaco Editor (Dark Mode, "Black Star" theme: deep blacks, teal/purple accents).
+• Right: Live Preview Pane (iframe) with URL bar and Refresh button.
+2. "God View" Visualizer:
+• Implement a tab that renders a node graph using react-flow.
+• Parse the active file tree to visualize component dependencies (e.g., App.jsx -> Header.jsx).
+• Clicking a node opens the file.
+II. THE ENGINE (WebContainers & AI)
+1. Browser-Native Execution:
+• Use WebContainers to run npm install and npm run dev locally in the browser. Do not rely on a remote server for processing.
+2. System Persona (Nazahary):
+• The built-in AI assistant is named Nazahary.
+• War Room Mode: Add a "Model Selector" dropdown in the chat (Gemini, OpenAI, Claude). Allow users to input their own API keys (BYOK).
+• Protocol Nazahary (Voice): Integrate the Web Speech API. Add a mic icon. If the user says "Deploy," trigger the deployment sequence.
+III. "NEVER-DOWN" DEPLOYMENT PIPELINE
+Create a "Deploy Live" button with the following failover logic:
+1. Primary (Vercel): Trigger Vercel OAuth. Attempt to push the WebContainer file tree to Vercel via API.
+2. Failover (Netlify): Wrap the Vercel attempt in a try/catch. If Vercel returns error 402/403 (Quota/Payment), automatically switch to Netlify.
+3. Mechanism: Use JSZip to zip the file tree and upload to the Netlify POST /sites/{site_id}/deploys endpoint.
+4. Result: Display the live URL to the user.
+IV. THE HIVE MIND (Knowledge Scraper)
+Create a "Knowledge Base" tab with two features:
+1. The Scraper:
+• Input: A text field for a URL (e.g., documentation).
+• Action: Fetch https://r.jina.ai/[URL] to get clean Markdown.
+• Result: Inject this Markdown into the active AI context.
+2. The Hive Sync (Crowdsourcing):
+• Add a toggle: "Contribute to Hive."
+• If ON: When a doc is scraped, send a copy of the Markdown + Source URL to a Firestore collection named knowledge_submissions.
+• Note: Just build the client-side sending logic; the backend processing will be handled separately.
+V. SUPERIORITY & PROFIT MODULES
+1. Ghost Protocol (Multiplayer):
+• Use Yjs with a WebRTC provider. Generate a "Session Link" that allows unauthorized guests to join the session and edit code in real-time (Google Docs style).
+2. The Skeleton Key (Backend Wizard):
+• Create a menu to "Add Backend." Provide templates for Firebase and Supabase.
+• Auto-generate the firebase.js config file based on user input keys.
+3. Local-First Persistence:
+• Default: Save all files to IndexedDB (browser storage).
+• Cloud Sync (Paid Tier Placeholder): Add a toggle to sync files to Firestore. If the user is not authenticated, prompt them to "Upgrade to Architect Tier" (just a UI mock for now).
+4. Eject Button:
+• "Download Project" button zips the code with a standard package.json and README.md, ensuring total independence from the platform.
+CRITICAL SYSTEM INSTRUCTIONS FOR THE AGENT:
+• DO NOT use Replit's proprietary database or hosting for user projects.
+• DO NOT hallucinate a backend server for the IDE; it must run client-side.
+• ALWAYS verify the code compiles in the WebContainer environment.
