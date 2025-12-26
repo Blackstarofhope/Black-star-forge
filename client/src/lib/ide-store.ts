@@ -257,7 +257,7 @@ interface IDEState {
   
   setDependencyGraph: (nodes: DependencyNode[], edges: DependencyEdge[]) => void;
   
-  addChatMessage: (message: Omit<ChatMessage, "id" | "timestamp">) => void;
+  addChatMessage: (message: Omit<ChatMessage, "id" | "timestamp">) => ChatMessage;
   setAIModel: (model: AIModel) => void;
   setApiKey: (provider: "openai" | "anthropic" | "google", key: string) => void;
   toggleChat: () => void;
@@ -483,6 +483,7 @@ export const useIDEStore = create<IDEState>((set, get) => ({
     set({ chatMessages: [...get().chatMessages, newMessage] });
     // Persist immediately
     idb.saveChatMessage(newMessage);
+    return newMessage;
   },
   
   setAIModel: (model) => {

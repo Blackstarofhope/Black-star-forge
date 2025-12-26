@@ -3,6 +3,19 @@
 ## Overview
 The Black Star Forge is an autonomous, browser-based AI Development Environment (IDE) that runs entirely client-side using WebContainers. It features a cyberpunk aesthetic with deep blacks, teal, and purple accents.
 
+## Recent Changes (December 2024)
+- Fixed chat message handling to use persisted IDs/timestamps
+- Added IndexedDB persistence for files, chat history, knowledge base, and API keys
+- Wired WebContainer lifecycle: boot on mount, file sync, dev server controls
+- Added Terminal "Run" button to start dev server
+- Added CloudSyncToggle with Architect tier upgrade modal
+
+## Important Notes
+- **WebContainer Requirements**: WebContainers require cross-origin isolation headers (COOP/COEP) for SharedArrayBuffer. In development, this may show a warning but the core IDE features still work.
+- **BYOK Model**: Users provide their own API keys for GPT-4, Claude-3, and Gemini Pro
+- **Local-First**: All data persists in IndexedDB - no backend database required
+- **Cloud Sync**: Firestore sync is a placeholder requiring "Architect tier" upgrade
+
 ## Tech Stack
 - **Frontend**: React, Vite, Tailwind CSS, Shadcn UI
 - **Code Editor**: Monaco Editor (VS Code implementation)

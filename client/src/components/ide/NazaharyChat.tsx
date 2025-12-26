@@ -66,14 +66,12 @@ export default function NazaharyChat() {
     setMessage("");
     setIsSending(true);
 
-    // Create user message object
-    const userMessageObj = {
-      role: "user" as const,
+    // Create and persist user message - addChatMessage returns the created message with ID
+    const createdUserMessage = addChatMessage({
+      role: "user",
       content: userMessage,
       model: aiModel,
-    };
-    
-    addChatMessage(userMessageObj);
+    });
 
     // Check if API key is configured
     const keyMap = { "gpt-4": "openai", "claude-3": "anthropic", "gemini-pro": "google" } as const;
@@ -89,8 +87,8 @@ export default function NazaharyChat() {
       return;
     }
 
-    // Build conversation history including the new message for API call
-    const conversationForAPI = [...chatMessages, { id: "", role: "user" as const, content: userMessage, timestamp: Date.now() }];
+    // Build conversation history including the new message with correct ID/timestamp
+    const conversationForAPI = [...chatMessages, createdUserMessage];
     try {
       const response = await sendChatMessage(aiModel, apiKeys, conversationForAPI, knowledgeEntries);
       
