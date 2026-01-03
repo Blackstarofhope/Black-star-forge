@@ -28,6 +28,13 @@ npm run test:agent
 
 **That's it!** The agent is now running and ready to accept project orders.
 
+### 🚀 NEW: Logistics Division (Multi-Platform)
+
+The agent now supports **Web (Vercel)** and **Android (Google Play)** deployments:
+- See [LOGISTICS_DIVISION.md](LOGISTICS_DIVISION.md) for full setup guide
+- Requires: Vercel Token, Android SDK, Google Play credentials
+- Single approval email with both Web + Android screenshots
+
 ---
 
 ## 🎯 What Does It Do?
@@ -66,6 +73,7 @@ curl -X POST http://localhost:5000/api/receive-order \
 - **Orchestrator** - Main coordinator
 - **Planner** - AI-powered project planning
 - **Executor** - Execution loop with validation
+- **Logistics Division** 🆕 - Multi-platform builds (Web + Android)
 - **Stripe Automator** - Payment integration
 - **Notifier** - Email system
 - **Perception Layer** - Six Eyes validation
@@ -124,6 +132,7 @@ curl -X POST http://localhost:5000/api/receive-order \
 - **[BLACK_STAR_README.md](BLACK_STAR_README.md)** - Complete user guide
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture deep-dive
 - **[SYSTEM_FLOW.txt](SYSTEM_FLOW.txt)** - Visual flow diagrams
+- **[LOGISTICS_DIVISION.md](LOGISTICS_DIVISION.md)** 🆕 - Multi-platform deployment guide
 
 ### Deployment
 - **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** - Production checklist

@@ -27,13 +27,19 @@ export interface ProjectState {
   requirements: string;
   plan: PlanStep[];
   currentStep: number;
-  status: 'planning' | 'coding' | 'validating' | 'awaiting_approval' | 'deploying' | 'completed' | 'failed';
+  status: 'planning' | 'coding' | 'validating' | 'building' | 'awaiting_approval' | 'deploying' | 'completed' | 'failed';
   workspaceDir: string;
   stripeProductId?: string;
   stripePriceId?: string;
   stripePaymentLink?: string;
   screenshotPath?: string;
   failureCount: number;
+  // Multi-platform support
+  platforms?: ('web' | 'android')[];
+  androidScreenshotPath?: string;
+  webScreenshotPath?: string;
+  webPreviewUrl?: string;
+  androidPackageName?: string;
 }
 
 export interface SixEyesResult {

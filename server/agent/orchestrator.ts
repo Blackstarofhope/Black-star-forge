@@ -8,6 +8,7 @@ import { Planner } from './planner';
 import { Executor } from './executor';
 import { Notifier } from './notifier';
 import { ErrorHandler } from './error-handler';
+import { LogisticsExecutor } from './logistics-executor';
 import fs from 'fs/promises';
 import path from 'path';
 import { nanoid } from 'nanoid';
@@ -16,6 +17,7 @@ export class BlackStarOrchestrator {
   private planner: Planner;
   private executor: Executor;
   private notifier: Notifier;
+  private logisticsExecutor: LogisticsExecutor;
   private projectsDir: string;
   private activeProjects: Map<string, ProjectState>;
 
@@ -23,6 +25,7 @@ export class BlackStarOrchestrator {
     this.planner = new Planner();
     this.executor = new Executor();
     this.notifier = new Notifier();
+    this.logisticsExecutor = new LogisticsExecutor();
     this.projectsDir = path.join(process.cwd(), 'projects');
     this.activeProjects = new Map();
     
@@ -116,8 +119,39 @@ export class BlackStarOrchestrator {
         return;
       }
 
-      // PHASE 3: APPROVAL REQUEST
-      console.log(`\n[Orchestrator] 📧 Phase 3: Requesting Approval`);
+      // PHASE 3: BUILD & DEPLOYMENT (Multi-Platform)
+      console.log(`\n[Orchestrator] 🚀 Phase 3: Build & Deployment (Logistics)`);
+      projectState.status = 'building';
+      
+      // Detect platforms from requirements
+      projectState.platforms = this.logisticsExecutor.detectPlatforms(projectState.requirements);
+      console.log(`[Orchestrator] Detected platforms:`, projectState.platforms);
+      
+      // Build all platforms
+      const buildResult = await this.logisticsExecutor.buildAllPlatforms(projectState);
+      
+      if (!buildResult.overallSuccess) {
+        console.error(`\n[Orchestrator] ❌ Build failed`);
+        
+        // Collect error details
+        const errors: string[] = [];
+        if (buildResult.web && !buildResult.web.success) {
+          errors.push(`Web: ${buildResult.web.error}`);
+        }
+        if (buildResult.android && !buildResult.android.success) {
+          errors.push(`Android: ${buildResult.android.error}`);
+        }
+        
+        await this.notifier.sendErrorReport(
+          projectState,
+          `Build failed:\n${errors.join('\n')}`
+        );
+        
+        return;
+      }
+
+      // PHASE 4: APPROVAL REQUEST
+      console.log(`\n[Orchestrator] 📧 Phase 4: Requesting Approval`);
       projectState.status = 'awaiting_approval';
       
       await this.notifier.sendApprovalRequest(projectState);
@@ -157,18 +191,44 @@ export class BlackStarOrchestrator {
     }
 
     try {
-      // Deploy the project
-      const deploymentResult = await this.executor.deployProject(projectState);
+      const platforms = projectState.platforms || ['web'];
+      const deploymentUrls: string[] = [];
+      let allDeploymentsSucceeded = true;
+
+      // Deploy Web to Production
+      if (platforms.includes('web')) {
+        const webDeploy = await this.logisticsExecutor.deployWebProduction(projectState);
+        if (webDeploy.success && webDeploy.url) {
+          deploymentUrls.push(`Web: ${webDeploy.url}`);
+        } else {
+          allDeploymentsSucceeded = false;
+        }
+      }
+
+      // Deploy Android to Google Play Internal
+      if (platforms.includes('android')) {
+        const androidDeploy = await this.logisticsExecutor.deployAndroidProduction(projectState);
+        if (androidDeploy) {
+          deploymentUrls.push('Android: Google Play Internal Track');
+        } else {
+          allDeploymentsSucceeded = false;
+        }
+      }
+
+      // Also run legacy Stripe deployment if needed
+      const legacyResult = await this.executor.deployProject(projectState);
       
-      if (deploymentResult.success) {
+      if (allDeploymentsSucceeded && legacyResult.success) {
         // Send deployment confirmation
-        await this.notifier.sendDeploymentConfirmation(projectState, deploymentResult.url);
+        const deploymentUrl = deploymentUrls.join('\n');
+        await this.notifier.sendDeploymentConfirmation(projectState, deploymentUrl);
         
-        console.log(`[Orchestrator] ✅ Project deployed successfully!`);
-        return deploymentResult;
+        console.log(`[Orchestrator] ✅ All platforms deployed successfully!`);
+        return { success: true, url: deploymentUrl };
       } else {
-        await this.notifier.sendErrorReport(projectState, deploymentResult.error || 'Deployment failed');
-        return deploymentResult;
+        const error = 'Some deployments failed. Check logs for details.';
+        await this.notifier.sendErrorReport(projectState, error);
+        return { success: false, error };
       }
     } catch (error: any) {
       console.error('[Orchestrator] Deployment error:', error);

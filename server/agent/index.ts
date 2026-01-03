@@ -9,6 +9,8 @@ export { Planner } from './planner';
 export { Executor } from './executor';
 export { StripeAutomator } from './stripe-automator';
 export { Notifier } from './notifier';
+export { LogisticsExecutor } from './logistics-executor';
+export { AndroidBuilder, VercelDeployer } from './logistics';
 
 export type {
   ProjectOrder,
@@ -17,3 +19,9 @@ export type {
   ValidationResult,
   SixEyesResult
 } from './types';
+
+export type {
+  AndroidBuildResult,
+  VercelDeployResult,
+  MultiPlatformBuildResult
+} from './logistics';
