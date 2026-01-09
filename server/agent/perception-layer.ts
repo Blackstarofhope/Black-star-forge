@@ -6,11 +6,12 @@
 import { spawn } from 'child_process';
 import puppeteer from 'puppeteer';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { config } from './config';
 import fs from 'fs/promises';
 import path from 'path';
 import { ValidationResult, SixEyesResult } from './types';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const genAI = new GoogleGenerativeAI(config.geminiApiKey || 'mock_key');
 
 export class PerceptionLayer {
   /**
@@ -18,6 +19,10 @@ export class PerceptionLayer {
    * Verifies function signatures against API documentation
    */
   async docVerify(code: string, apiType: 'stripe' | 'firebase' | 'general'): Promise<ValidationResult> {
+    if (config.isMockMode) {
+      return { passed: true };
+    }
+
     try {
       // Simple knowledge base of common deprecated patterns
       const deprecatedPatterns: Record<string, string[]> = {
@@ -124,6 +129,19 @@ export class PerceptionLayer {
    * Puppeteer screenshot + Gemini Vision verification
    */
   async visualProof(url: string, workspaceDir: string): Promise<ValidationResult> {
+    if (config.isMockMode) {
+      // Create a dummy screenshot
+      const screenshotPath = path.join(workspaceDir, 'visual-proof.png');
+      try {
+         // Create a simple 1x1 png or just a text file if image parsing isn't strictly enforced
+         // But better to skip file creation if not needed, or create a dummy file
+         await fs.writeFile(screenshotPath, 'dummy image data');
+      } catch (e) {
+         // ignore
+      }
+      return { passed: true, details: { screenshotPath, analysis: "Mock Valid" } };
+    }
+
     let browser;
     try {
       browser = await puppeteer.launch({

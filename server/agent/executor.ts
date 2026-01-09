@@ -8,11 +8,12 @@ import { ProjectState, PlanStep, SixEyesResult } from './types';
 import { PerceptionLayer } from './perception-layer';
 import { StripeAutomator } from './stripe-automator';
 import { ErrorHandler } from './error-handler';
+import { config } from './config';
 import fs from 'fs/promises';
 import path from 'path';
 import { spawn } from 'child_process';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const genAI = new GoogleGenerativeAI(config.geminiApiKey || 'mock_key');
 
 export class Executor {
   private perceptionLayer: PerceptionLayer;
@@ -34,6 +35,13 @@ export class Executor {
   ): Promise<{ success: boolean; code?: string; error?: string }> {
     console.log(`\n[Executor] Executing: ${step.title}`);
     
+    if (config.isMockMode) {
+      console.log('[Executor] 🎭 Mock Mode: Generating mock code');
+      const mockCode = this.generateMockCode(step, projectState);
+      await this.saveCodeToWorkspace(projectState.workspaceDir, step.id, mockCode);
+      return { success: true, code: mockCode };
+    }
+
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
 
     // Build context from previous steps
@@ -102,6 +110,90 @@ Generate the code now:`;
   }
 
   /**
+   * Generate mock code based on step
+   */
+  private generateMockCode(step: PlanStep, projectState: ProjectState): string {
+    const title = step.title.toLowerCase();
+
+    if (title.includes('package.json') || title.includes('setup') || title.includes('structure')) {
+      return JSON.stringify({
+        name: projectState.project_name.toLowerCase().replace(/\s+/g, '-'),
+        version: "1.0.0",
+        main: "server.ts",
+        dependencies: {
+          "express": "^4.17.1",
+          "stripe": "^8.0.0"
+        }
+      }, null, 2);
+    }
+
+    if (title.includes('html') || title.includes('frontend')) {
+      return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>${projectState.project_name}</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>${projectState.project_name}</h1>
+  <p>${projectState.requirements}</p>
+
+  <div class="payment-section">
+    <!-- PAYMENT_LINK -->
+    <button class="pay-button">Purchase Now</button>
+  </div>
+</body>
+</html>`;
+    }
+
+    if (title.includes('css') || title.includes('style')) {
+      return `body {
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  line-height: 1.6;
+}
+
+h1 { color: #333; }
+
+.pay-button {
+  background: #635bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}`;
+    }
+
+    if (title.includes('server') || title.includes('express')) {
+      return `import express from 'express';
+const app = express();
+const port = 3000;
+
+app.use(express.static('public'));
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.sendFile('index.html', { root: __dirname });
+});
+
+app.listen(port, () => {
+  console.log(\`Server running at http://localhost:\${port}\`);
+});`;
+    }
+
+    return `// Code for step: ${step.title}
+// Description: ${step.description}
+// Project: ${projectState.project_name}
+
+console.log('Implementation placeholder');`;
+  }
+
+  /**
    * Validate code with Six Eyes
    */
   async validateCode(
@@ -110,6 +202,16 @@ Generate the code now:`;
     step: PlanStep
   ): Promise<SixEyesResult> {
     console.log(`[Executor] Running Six Eyes validation for: ${step.title}`);
+
+    if (config.isMockMode) {
+      console.log('[Executor] 🎭 Mock Mode: Bypassing validation');
+      return {
+        docVerify: { passed: true },
+        syntaxGate: { passed: true },
+        visualProof: { passed: true },
+        overallPassed: true
+      };
+    }
 
     // Determine API type from step
     let apiType: 'stripe' | 'firebase' | 'general' = 'general';

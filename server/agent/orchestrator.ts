@@ -9,6 +9,7 @@ import { Executor } from './executor';
 import { Notifier } from './notifier';
 import { ErrorHandler } from './error-handler';
 import { LogisticsExecutor } from './logistics-executor';
+import { config } from './config';
 import fs from 'fs/promises';
 import path from 'path';
 import { nanoid } from 'nanoid';
@@ -63,7 +64,8 @@ export class BlackStarOrchestrator {
       currentStep: 0,
       status: 'planning',
       workspaceDir,
-      failureCount: 0
+      failureCount: 0,
+      mockMode: config.isMockMode
     };
 
     this.activeProjects.set(order.orderId, projectState);

@@ -5,16 +5,22 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { PlanStep, ProjectOrder } from './types';
+import { config } from './config';
 import fs from 'fs/promises';
 import path from 'path';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const genAI = new GoogleGenerativeAI(config.geminiApiKey || 'mock_key');
 
 export class Planner {
   /**
    * Generate a detailed plan from project requirements
    */
   async generatePlan(order: ProjectOrder): Promise<PlanStep[]> {
+    if (config.isMockMode) {
+      console.log('[Planner] 🎭 Mock Mode: Generating mock plan');
+      return this.generateMockPlan(order);
+    }
+
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
 
     const prompt = `You are a senior software architect. Break down this project into atomic, sequential coding steps.
@@ -97,6 +103,49 @@ Important: Return ONLY the JSON array, no markdown formatting or explanations.`;
         }
       ];
     }
+  }
+
+  /**
+   * Generate a mock plan for testing
+   */
+  private generateMockPlan(order: ProjectOrder): PlanStep[] {
+    return [
+      {
+        id: 'step-1',
+        title: 'Setup Project Structure',
+        description: 'Initialize Node.js project structure, package.json, and tsconfig.json',
+        status: 'pending',
+        retries: 0
+      },
+      {
+        id: 'step-2',
+        title: 'Create Core Application',
+        description: 'Create server.ts with Express application and basic routes',
+        status: 'pending',
+        retries: 0
+      },
+      {
+        id: 'step-3',
+        title: 'Add Frontend',
+        description: 'Create index.html with basic structure matching requirements',
+        status: 'pending',
+        retries: 0
+      },
+      {
+        id: 'step-4',
+        title: 'Add Styling',
+        description: 'Create styles.css with responsive design',
+        status: 'pending',
+        retries: 0
+      },
+      {
+        id: 'step-5',
+        title: 'Stripe Integration (Mock)',
+        description: 'Integrate mock Stripe payment flow',
+        status: 'pending',
+        retries: 0
+      }
+    ];
   }
 
   /**

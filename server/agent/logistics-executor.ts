@@ -6,6 +6,7 @@
 import { ProjectState } from './types';
 import { AndroidBuilder, VercelDeployer, MultiPlatformBuildResult } from './logistics';
 import { ErrorHandler } from './error-handler';
+import { config } from './config';
 import path from 'path';
 
 export class LogisticsExecutor {
@@ -55,6 +56,36 @@ export class LogisticsExecutor {
   async buildAllPlatforms(projectState: ProjectState): Promise<MultiPlatformBuildResult> {
     console.log('\n[LogisticsExecutor] 🚀 Starting Multi-Platform Build Pipeline\n');
     
+    if (config.isMockMode) {
+      console.log('[LogisticsExecutor] 🎭 Mock Mode: Simulating builds');
+
+      const platforms = projectState.platforms || ['web'];
+      const result: MultiPlatformBuildResult = { overallSuccess: true };
+
+      if (platforms.includes('web')) {
+        result.web = {
+          success: true,
+          previewUrl: `https://${projectState.project_name.toLowerCase().replace(/\s+/g, '-')}.vercel.app`,
+          screenshotPath: path.join(projectState.workspaceDir, 'web-screenshot.png')
+        };
+        projectState.webPreviewUrl = result.web.previewUrl;
+        projectState.webScreenshotPath = result.web.screenshotPath;
+      }
+
+      if (platforms.includes('android')) {
+        result.android = {
+          success: true,
+          aabPath: path.join(projectState.workspaceDir, 'android/app/build/outputs/bundle/release/app-release.aab'),
+          screenshotPath: path.join(projectState.workspaceDir, 'android-screenshot.png')
+        };
+        projectState.androidPackageName = `com.blackstar.${projectState.project_name.toLowerCase().replace(/\s+/g, '')}`;
+        projectState.androidScreenshotPath = result.android.screenshotPath;
+      }
+
+      projectState.status = 'awaiting_approval';
+      return result;
+    }
+
     const platforms = projectState.platforms || ['web'];
     const result: MultiPlatformBuildResult = {
       overallSuccess: true

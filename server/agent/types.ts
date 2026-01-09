@@ -40,6 +40,8 @@ export interface ProjectState {
   webScreenshotPath?: string;
   webPreviewUrl?: string;
   androidPackageName?: string;
+  // Mock mode
+  mockMode: boolean;
 }
 
 export interface SixEyesResult {

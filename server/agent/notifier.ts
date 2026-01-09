@@ -5,22 +5,27 @@
 
 import nodemailer from 'nodemailer';
 import { ProjectState } from './types';
+import { config } from './config';
 import path from 'path';
 
 export class Notifier {
-  private transporter: nodemailer.Transporter;
+  private transporter: nodemailer.Transporter | null = null;
 
   constructor() {
-    // Create transporter - supports multiple email services
-    this.transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.EMAIL_PORT || '587'),
-      secure: process.env.EMAIL_SECURE === 'true',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
-      }
-    });
+    if (config.emailUser && config.emailPassword) {
+      // Create transporter - supports multiple email services
+      this.transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+        port: parseInt(process.env.EMAIL_PORT || '587'),
+        secure: process.env.EMAIL_SECURE === 'true',
+        auth: {
+          user: config.emailUser,
+          pass: config.emailPassword
+        }
+      });
+    } else {
+        console.warn('Email credentials not configured. Emails will be logged to console.');
+    }
   }
 
   /**
@@ -147,13 +152,18 @@ export class Notifier {
       <p><em>The Black Star Sweatshop - Autonomous Revenue Agent with Logistics Division</em></p>
     `;
 
-    await this.transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: adminEmail,
-      subject,
-      html,
-      attachments
-    });
+    if (this.transporter) {
+      await this.transporter.sendMail({
+        from: config.emailUser,
+        to: adminEmail,
+        subject,
+        html,
+        attachments
+      });
+    } else {
+      console.log(`\n[Notifier] 📧 EMAIL TO ${adminEmail}: ${subject}`);
+      console.log(`[Notifier] Content (abridged): ${html.substring(0, 200)}...`);
+    }
   }
 
   /**
@@ -194,12 +204,17 @@ export class Notifier {
       <p><em>The Black Star Sweatshop - Autonomous Revenue Agent</em></p>
     `;
 
-    await this.transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: adminEmail,
-      subject,
-      html
-    });
+    if (this.transporter) {
+      await this.transporter.sendMail({
+        from: config.emailUser,
+        to: adminEmail,
+        subject,
+        html
+      });
+    } else {
+      console.log(`\n[Notifier] 📧 EMAIL TO ${adminEmail}: ${subject}`);
+      console.log(`[Notifier] Error: ${error}`);
+    }
   }
 
   /**
@@ -264,11 +279,16 @@ export class Notifier {
       <p><small>Multi-Platform Deployment: Web (Vercel) + Android (Google Play)</small></p>
     `;
 
-    await this.transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: adminEmail,
-      subject,
-      html
-    });
+    if (this.transporter) {
+      await this.transporter.sendMail({
+        from: config.emailUser,
+        to: adminEmail,
+        subject,
+        html
+      });
+    } else {
+      console.log(`\n[Notifier] 📧 EMAIL TO ${adminEmail}: ${subject}`);
+      console.log(`[Notifier] Deployment URL: ${deploymentUrl || 'N/A'}`);
+    }
   }
 }

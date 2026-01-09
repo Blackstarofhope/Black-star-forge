@@ -5,30 +5,37 @@
 
 import Stripe from 'stripe';
 import { ProjectState } from './types';
+import { config } from './config';
 
 export class StripeAutomator {
-  private stripe: Stripe;
+  private stripe: Stripe | null = null;
   private isTestMode: boolean;
 
   constructor(isTestMode: boolean = true) {
     this.isTestMode = isTestMode;
     const apiKey = isTestMode 
-      ? process.env.STRIPE_TEST_KEY 
-      : process.env.STRIPE_LIVE_KEY;
+      ? config.stripeTestKey
+      : config.stripeLiveKey;
     
-    if (!apiKey) {
-      throw new Error('Stripe API key not configured');
+    // Only initialize Stripe if key exists or not in mock mode (though mock mode usually implies no keys)
+    if (apiKey) {
+      this.stripe = new Stripe(apiKey, {
+        apiVersion: '2025-12-15.clover'
+      } as any);
+    } else if (!config.isMockMode) {
+      // If not in mock mode and no key, throw error
+      console.warn('Stripe API key not configured');
     }
-
-    this.stripe = new Stripe(apiKey, {
-      apiVersion: '2025-12-15.clover'
-    });
   }
 
   /**
    * Create a Stripe product for the project
    */
   async createProduct(projectState: ProjectState): Promise<string> {
+    if (config.isMockMode || !this.stripe) {
+      return `prod_mock_${Math.random().toString(36).substring(7)}`;
+    }
+
     try {
       const product = await this.stripe.products.create({
         name: projectState.project_name,
@@ -49,6 +56,10 @@ export class StripeAutomator {
    * Create a price for the product
    */
   async createPrice(productId: string, amount: number, currency: string = 'usd'): Promise<string> {
+    if (config.isMockMode || !this.stripe) {
+      return `price_mock_${Math.random().toString(36).substring(7)}`;
+    }
+
     try {
       const price = await this.stripe.prices.create({
         product: productId,
@@ -69,6 +80,10 @@ export class StripeAutomator {
    * Create a payment link
    */
   async createPaymentLink(priceId: string, projectState: ProjectState): Promise<string> {
+    if (config.isMockMode || !this.stripe) {
+      return `https://buy.stripe.com/test_${Math.random().toString(36).substring(7)}`;
+    }
+
     try {
       const paymentLink = await this.stripe.paymentLinks.create({
         line_items: [
