@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-primary/20;
+  }
+
+  body {
+    @apply bg-background text-primary antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  .glow-text {
+    @apply text-primary;
+    text-shadow: 0 0 10px theme('colors.primary'),
+                 0 0 20px theme('colors.primary'),
+                 0 0 30px theme('colors.primary');
+  }
+
+  .glow-text-secondary {
+    @apply text-secondary;
+    text-shadow: 0 0 10px theme('colors.secondary'),
+                 0 0 20px theme('colors.secondary'),
+                 0 0 30px theme('colors.secondary');
+  }
+
+  .glow-text-purple {
+    @apply text-purple;
+    text-shadow: 0 0 10px theme('colors.purple'),
+                 0 0 20px theme('colors.purple'),
+                 0 0 30px theme('colors.purple');
+  }
+
+  .cyber-border {
+    @apply border-2 border-primary;
+    box-shadow: 0 0 10px theme('colors.primary'),
+                inset 0 0 10px theme('colors.primary');
+  }
+
+  .cyber-button {
+    @apply px-8 py-4 bg-transparent border-2 border-primary text-primary font-bold uppercase tracking-wider transition-all duration-300;
+    box-shadow: 0 0 10px theme('colors.primary');
+  }
+
+  .cyber-button:hover {
+    @apply bg-primary text-background;
+    box-shadow: 0 0 20px theme('colors.primary'),
+                0 0 40px theme('colors.primary');
+  }
+
+  .cyber-button-secondary {
+    @apply px-8 py-4 bg-transparent border-2 border-secondary text-secondary font-bold uppercase tracking-wider transition-all duration-300;
+    box-shadow: 0 0 10px theme('colors.secondary');
+  }
+
+  .cyber-button-secondary:hover {
+    @apply bg-secondary text-background;
+    box-shadow: 0 0 20px theme('colors.secondary'),
+                0 0 40px theme('colors.secondary');
+  }
+
+  .cyber-card {
+    @apply bg-background/50 backdrop-blur-sm border-2 border-primary/30 p-8;
+    box-shadow: 0 0 20px theme('colors.primary/10'),
+                inset 0 0 20px theme('colors.primary/5');
+  }
+
+  .cyber-input {
+    @apply w-full px-4 py-3 bg-background border-2 border-primary/50 text-primary focus:border-primary focus:outline-none transition-all;
+    box-shadow: inset 0 0 10px theme('colors.primary/20');
+  }
+
+  .cyber-input:focus {
+    box-shadow: 0 0 10px theme('colors.primary'),
+                inset 0 0 10px theme('colors.primary/20');
+  }
+
+  .grid-background {
+    background-image:
+      linear-gradient(theme('colors.primary/10') 1px, transparent 1px),
+      linear-gradient(90deg, theme('colors.primary/10') 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  .scanline {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scanline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      transparent 50%,
+      rgba(0, 255, 249, 0.03) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    animation: scanline 8s linear infinite;
+  }
+
+  @keyframes scanline {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(100%);
+    }
+  }
+}
+
+@layer utilities {
+  .text-shadow-glow {
+    text-shadow: 0 0 10px currentColor,
+                 0 0 20px currentColor,
+                 0 0 30px currentColor;
+  }
+}
