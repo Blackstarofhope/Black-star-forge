@@ -249,9 +249,24 @@ export class BlackStarOrchestrator {
       return { success: false };
     }
 
-    projectState.status = 'failed';
+    // Update project state for retry
+    if (!projectState.rejectionHistory) {
+      projectState.rejectionHistory = [];
+    }
+    projectState.rejectionHistory.push(reason);
+    projectState.rejectionReason = reason;
+
+    // Append feedback to requirements to guide the new plan
+    projectState.requirements += `\n\n[REVISION REQUESTED]: ${reason}`;
+
+    // Reset state for re-planning and execution
+    projectState.status = 'planning';
+    projectState.currentStep = 0;
     
-    // Could implement retry logic here if needed
+    console.log(`[Orchestrator] 🔄 Restarting execution with updated requirements...`);
+
+    // Trigger autonomous execution again
+    this.executeOrderAsync(projectState);
     
     return { success: true };
   }
