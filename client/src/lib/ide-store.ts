@@ -245,7 +245,7 @@ interface IDEState {
   openTab: (id: string) => void;
   closeTab: (id: string) => void;
   toggleDirectory: (id: string) => void;
-  createFile: (parentPath: string, name: string, type: "file" | "directory") => void;
+  createFile: (parentPath: string, name: string, type: "file" | "directory", content?: string) => void;
   deleteFile: (id: string) => void;
   
   setEditorContent: (content: string) => void;
@@ -405,15 +405,17 @@ export const useIDEStore = create<IDEState>((set, get) => ({
     });
   },
   
-  createFile: (parentPath, name, type) => {
+  createFile: (parentPath, name, type, content) => {
     const newId = nanoid();
     const newPath = parentPath === "/" ? `/${name}` : `${parentPath}/${name}`;
+    const fileContent = type === "file" ? (content || "") : undefined;
+
     const newNode: FileNode = {
       id: newId,
       name,
       type,
       path: newPath,
-      content: type === "file" ? "" : undefined,
+      content: fileContent,
       children: type === "directory" ? [] : undefined,
       isOpen: type === "directory" ? false : undefined,
     };
@@ -435,7 +437,7 @@ export const useIDEStore = create<IDEState>((set, get) => ({
     // Mirror to WebContainer
     if (get().isContainerReady) {
       if (type === "file") {
-        webcontainer.writeFile(newPath, "").catch(console.error);
+        webcontainer.writeFile(newPath, fileContent || "").catch(console.error);
       } else {
         webcontainer.mkdir(newPath).catch(console.error);
       }
