@@ -130,9 +130,8 @@ export default supabase;
   const handleAddToProject = () => {
     if (generated) {
       const fileName = selectedTemplate === "firebase" ? "firebase.js" : "supabase.js";
-      createFile("/src", fileName, "file");
+      createFile("/src", fileName, "file", generated);
       
-      // Note: In a real implementation, we'd also update the file content
       toast({
         title: "Backend added",
         description: `${templates[selectedTemplate].name} configuration file has been created`,
