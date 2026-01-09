@@ -8,6 +8,7 @@ import { ProjectState, PlanStep, SixEyesResult } from './types';
 import { PerceptionLayer } from './perception-layer';
 import { StripeAutomator } from './stripe-automator';
 import { ErrorHandler } from './error-handler';
+import { ConsciousnessEngine } from './consciousness/engine';
 import { config } from './config';
 import fs from 'fs/promises';
 import path from 'path';
@@ -18,11 +19,13 @@ const genAI = new GoogleGenerativeAI(config.geminiApiKey || 'mock_key');
 export class Executor {
   private perceptionLayer: PerceptionLayer;
   private stripeAutomator: StripeAutomator;
+  private consciousness: ConsciousnessEngine;
   private maxRetries: number = 3;
 
   constructor() {
     this.perceptionLayer = new PerceptionLayer();
     this.stripeAutomator = new StripeAutomator(true); // Start in test mode
+    this.consciousness = new ConsciousnessEngine();
   }
 
   /**
@@ -312,14 +315,44 @@ console.log('Implementation placeholder');`;
         stepSucceeded = true;
         step.status = 'completed';
         consecutiveFailures = 0;
-        console.log(`[Executor] ✅ Step completed: ${step.title}`);
+
+        // Update Consciousness: Success!
+        const state = this.consciousness.processStimulus({
+          type: 'success',
+          magnitude: 0.8,
+          description: `Step completed: ${step.title}`
+        });
+        console.log(`[Executor] ✅ Step completed. Mood: ${state.currentMood} (Conf: ${state.confidence.toFixed(2)})`);
       }
 
       if (!stepSucceeded) {
         step.status = 'failed';
         consecutiveFailures++;
         
-        console.error(`[Executor] ❌ Step failed after ${this.maxRetries} attempts: ${step.title}`);
+        // Update Consciousness: Failure
+        const state = this.consciousness.processStimulus({
+          type: 'failure',
+          magnitude: 0.5,
+          description: `Step failed: ${step.title}`
+        });
+        console.log(`[Executor] ❌ Step failed. Mood: ${state.currentMood} (Guilt: ${state.guilt.toFixed(2)})`);
+
+        // Check for Reflection Trigger
+        if (state.needsReflection) {
+           console.log(`\n[Executor] 🧘 REFLECTION SANDBOX ACTIVATED`);
+           console.log(`[Executor] Agent is overwhelmed (Guilt: ${state.guilt.toFixed(2)}, Willpower: ${state.willpower.toFixed(2)})`);
+           console.log(`[Executor] Entering deep thought to analyze mistake...`);
+
+           // In a real implementation, we would pause here and run a reflection prompt
+           // For now, we simulate the benefit of reflection by resetting willpower slightly
+           // effectively giving it "one last wind" before full failure
+           this.consciousness.processStimulus({
+             type: 'success',
+             magnitude: 0.2, // Small morale boost from "figuring it out"
+             description: 'Reflected on error'
+           });
+        }
+
         console.error(`[Executor] Error: ${lastError}`);
 
         // Hallucination Block: Stop after 3 consecutive failures
@@ -327,6 +360,14 @@ console.log('Implementation placeholder');`;
         
         if (ErrorHandler.shouldHalt(projectState)) {
           console.error(`[Executor] 🛑 HALTED: 3 consecutive failures. Stopping to prevent token burn.`);
+
+          // Update Consciousness: Critical Failure
+          this.consciousness.processStimulus({
+            type: 'critical_failure',
+            magnitude: 1.0,
+            description: 'Project halted due to consecutive failures'
+          });
+
           ErrorHandler.logProjectState(projectState, 'Halted Project');
           projectState.status = 'failed';
           return projectState;
