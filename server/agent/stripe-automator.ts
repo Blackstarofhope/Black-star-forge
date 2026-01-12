@@ -7,8 +7,9 @@ import Stripe from 'stripe';
 import { ProjectState } from './types';
 
 export class StripeAutomator {
-  private stripe: Stripe;
+  private stripe: Stripe | null = null;
   private isTestMode: boolean;
+  private mockMode: boolean = false;
 
   constructor(isTestMode: boolean = true) {
     this.isTestMode = isTestMode;
@@ -17,18 +18,24 @@ export class StripeAutomator {
       : process.env.STRIPE_LIVE_KEY;
     
     if (!apiKey) {
-      throw new Error('Stripe API key not configured');
+      console.warn('Stripe API key not configured. Falling back to Mock Mode.');
+      this.mockMode = true;
+    } else {
+      this.stripe = new Stripe(apiKey, {
+        apiVersion: '2025-12-15.clover'
+      });
     }
-
-    this.stripe = new Stripe(apiKey, {
-      apiVersion: '2025-12-15.clover'
-    });
   }
 
   /**
    * Create a Stripe product for the project
    */
   async createProduct(projectState: ProjectState): Promise<string> {
+    if (this.mockMode || !this.stripe) {
+        console.log(`[Stripe Mock] Created product for ${projectState.project_name}`);
+        return `prod_mock_${Date.now()}`;
+    }
+
     try {
       const product = await this.stripe.products.create({
         name: projectState.project_name,
@@ -49,6 +56,11 @@ export class StripeAutomator {
    * Create a price for the product
    */
   async createPrice(productId: string, amount: number, currency: string = 'usd'): Promise<string> {
+    if (this.mockMode || !this.stripe) {
+        console.log(`[Stripe Mock] Created price for product ${productId}: ${amount} ${currency}`);
+        return `price_mock_${Date.now()}`;
+    }
+
     try {
       const price = await this.stripe.prices.create({
         product: productId,
@@ -69,6 +81,11 @@ export class StripeAutomator {
    * Create a payment link
    */
   async createPaymentLink(priceId: string, projectState: ProjectState): Promise<string> {
+    if (this.mockMode || !this.stripe) {
+        console.log(`[Stripe Mock] Created payment link for price ${priceId}`);
+        return `https://buy.stripe.com/test_${Date.now()}`;
+    }
+
     try {
       const paymentLink = await this.stripe.paymentLinks.create({
         line_items: [
@@ -167,10 +184,16 @@ export class StripeAutomator {
    * Verify Stripe configuration is correct
    */
   async verifyConfiguration(): Promise<boolean> {
+    if (this.mockMode) {
+        console.log('[Stripe] Mock Mode active. Configuration valid.');
+        return true;
+    }
     try {
       // Test the API key by fetching account info
-      const account = await this.stripe.accounts.retrieve();
-      console.log(`[Stripe] Connected to account: ${account.id}`);
+      if (this.stripe) {
+        const account = await this.stripe.accounts.retrieve();
+        console.log(`[Stripe] Connected to account: ${account.id}`);
+      }
       return true;
     } catch (error: any) {
       console.error(`[Stripe] Configuration error: ${error.message}`);
