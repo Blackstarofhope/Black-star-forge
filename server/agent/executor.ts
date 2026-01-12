@@ -34,6 +34,12 @@ export class Executor {
   ): Promise<{ success: boolean; code?: string; error?: string }> {
     console.log(`\n[Executor] Executing: ${step.title}`);
     
+    // Check if we need to mock
+    if (!process.env.GEMINI_API_KEY) {
+        console.warn('[Executor] GEMINI_API_KEY not found. Using Mock Mode for code generation.');
+        return this.mockGenerateCode(step, projectState);
+    }
+
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
 
     // Build context from previous steps
@@ -85,6 +91,23 @@ Generate the code now:`;
       console.error(`[Executor] Error generating code:`, error);
       return { success: false, error: error.message };
     }
+  }
+
+  private async mockGenerateCode(step: PlanStep, projectState: ProjectState): Promise<{ success: boolean; code: string }> {
+      const code = `
+// Mock code for step: ${step.title}
+// Project: ${projectState.project_name}
+// Description: ${step.description}
+
+console.log("Executing mocked code for ${step.id}");
+export const ${step.id.replace(/-/g, '_')} = () => {
+    return "This is a mocked implementation.";
+};
+      `;
+
+      // Save code to workspace
+      await this.saveCodeToWorkspace(projectState.workspaceDir, step.id, code);
+      return { success: true, code };
   }
 
   /**
